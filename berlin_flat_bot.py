@@ -1,11 +1,42 @@
 import requests
-import time
 from bs4 import BeautifulSoup
 from telegram import Bot
+import os
 
-# YOUR SETTINGS
-BOT_TOKEN = "8419431191:AAG2K2xTZ17vA98-gRKlk1RAtcQ4cDWeTCE"
-CHAT_ID = "8252624154"
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+CHAT_ID = os.environ["CHAT_ID"]
+
+SEARCH_URLS = [
+    "https://www.immobilienscout24.de/Suche/de/berlin/charlottenburg/wohnung-mieten?numberofrooms=3.0-&livingspace=75.0-&price=-1900.0",
+    "https://www.immobilienscout24.de/Suche/de/berlin/wilmersdorf/wohnung-mieten?numberofrooms=3.0-&livingspace=75.0-&price=-1900.0",
+    "https://www.immobilienscout24.de/Suche/de/berlin/schoeneberg/wohnung-mieten?numberofrooms=3.0-&livingspace=75.0-&price=-1900.0",
+]
+
+bot = Bot(token=BOT_TOKEN)
+
+def check():
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    for url in SEARCH_URLS:
+        r = requests.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        listings = soup.select("article a[href]")
+
+        for link in listings[:3]:
+            href = link["href"]
+
+            if "/expose/" in href:
+                full_link = "https://www.immobilienscout24.de" + href
+
+                bot.send_message(
+                    chat_id=CHAT_ID,
+                    text=f"🏠 New flat:\n{full_link}"
+                )
+
+if __name__ == "__main__":
+    check()
+
 
 SEARCH_URLS = [
     "https://www.immobilienscout24.de/Suche/de/berlin/charlottenburg/wohnung-mieten?numberofrooms=3.0-&livingspace=75.0-&price=-1900.0",
